@@ -77,20 +77,19 @@ def merge_coco_annotations(data_path, output_path):
 
             for ann in train_data["annotations"]:
                 old_annot_id = ann["id"]
-                ann["id"]= global_annotation_id
+                ann["id"] = global_annotation_id
                 global_annotation_id += 1
 
                 old_image_id = ann["image_id"]
-                ann["image_id"] = train_image_map[old_image_id]
                 if old_image_id not in train_image_map:
                     logging.error(f"{old_image_id} not in train image map")
                     continue
+                ann["image_id"] = train_image_map[old_image_id]
 
                 local_id = ann["category_id"]
                 category_name = local_train_cat_map[local_id]
                 ann["category_id"] = global_categories[category_name]
                 global_train_annotations.append(ann)
-
 
             # PLACEHOLDER: MERGE VAL CATEGORIES
 
@@ -110,9 +109,7 @@ def merge_coco_annotations(data_path, output_path):
                 val_image_map[old_image_id] = new_id
 
                 image["product"] = product_name
-
                 global_val_images.append(image)
-
                 global_image_id += 1
 
             # PLACEHOLDER: MERGE VAL ANNOTATIONS
@@ -126,31 +123,53 @@ def merge_coco_annotations(data_path, output_path):
                 global_annotation_id += 1
 
                 old_image_id = ann["image_id"]
-                ann["image_id"] = val_image_map[old_image_id]
                 if old_image_id not in val_image_map:
                     logging.error(f"{old_image_id} Not in val image map")
                     continue
+
+                ann["image_id"] = val_image_map[old_image_id]
 
                 local_id = ann["category_id"]
                 category_name = local_val_cat_map[local_id]
                 ann["category_id"] = global_categories[category_name]
                 global_val_annotations.append(ann)
 
-        # ----------------------------------------------------
         # PLACEHOLDER: BUILD FINAL CATEGORY LIST
-        # ----------------------------------------------------
+        final_categories = []
+
+        for name, new_id in global_categories.items():
+            final_categories.append({"id": new_id, "name": name})
+        final_categories.sort(key=lambda x: x["id"])
+
+        logging.info("Final categories created successfully")
 
         # Output files
         output_train = os.path.join(output_path, "instances_train_all.json")
         output_val = os.path.join(output_path, "instances_val_all.json")
 
-        # ----------------------------------------------------
         # PLACEHOLDER: SAVE TRAIN JSON
-        # ----------------------------------------------------
+        train_output = {
+            "images": global_train_images,
+            "annotations": global_train_annotations,
+            "categories": final_categories,
+        }
+        with open(output_train, "w") as f:
+            json.dump(train_output, f, indent=2)
+
+        logging.info("Successfully stored train cleaned data")
 
         # ----------------------------------------------------
         # PLACEHOLDER: SAVE VAL JSON
         # ----------------------------------------------------
+        val_output = {
+            "images": global_val_images,
+            "annotations": global_val_annotations,
+            "categories": final_categories,
+        }
+        with open(output_val, "w") as f:
+            json.dump(val_output, f, indent=2)
+
+        logging.info("Successfully stored val cleaned data")
 
     except Exception as e:
         logging.exception(f"Failed to merge datasets: {e}")
