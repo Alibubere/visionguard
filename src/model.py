@@ -31,3 +31,9 @@ def freeze_backbone(model):
     return model 
 
 
+def unfreeze_backbone(model):
+
+    for param in model.backbone.parameters():
+        param.requires_grad = True
+
+    return model
