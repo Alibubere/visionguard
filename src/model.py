@@ -20,7 +20,7 @@ def get_model(num_classes):
         num_classes
     )
 
-    model.train()  # IMPORTANT
+    model.train()
 
     return model
 
@@ -47,3 +47,14 @@ def get_optimizer(model, lr, weight_decay):
         weight_decay=weight_decay
     )
     return optimizer
+
+
+def get_lr_scheduler(optimizer):
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        optimizer,
+        milestones=[16, 22],
+        gamma=0.1
+    )
+    return scheduler
+
+
