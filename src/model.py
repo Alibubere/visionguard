@@ -2,6 +2,7 @@ from torchvision.models.detection import maskrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 import torch
+import logging
 
 def get_model(num_classes):
 
@@ -57,4 +58,28 @@ def get_lr_scheduler(optimizer):
     )
     return scheduler
 
+
+def save_checkpoint(model, optimizer, epoch, path):
+
+    checkpoint ={
+        "model_state": model.state_dict(),
+        "optimizer_state": optimizer.state_dict(),
+        "epoch":epoch
+    }
+
+    torch.save(checkpoint,path)
+
+    logging.info(f"Checkpoint saved to {path}")
+
+
+def load_checkpoint(model, optimizer, path):
+
+    checkpoint = torch.load(path)
+
+    model.load_state_dict(checkpoint["model_state"])
+    optimizer.load_state_dict(checkpoint["optimizer_state"])
+    start_epoch = checkpoint.get("epoch",1)+1
+
+    logging.info(f"Checkpoint loaded from {path}, resuming at epoch {start_epoch}")
+    return model , optimizer , start_epoch
 
