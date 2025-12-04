@@ -1,0 +1,32 @@
+data:
+  # raw class-wise folders from the VISION dataset
+  data_dir: data/raw/vision
+
+  # where merged COCO annotations are stored
+  output_dir: data/processed/annotations/
+
+  # merged train/val JSON paths (after merge_coco_annotations)
+  json_train_path: data/processed/annotations/instances_train_all.json
+  json_val_path: data/processed/annotations/instances_val_all.json
+
+  # unified image directories (after merging)
+  train_img_dir: data/processed/images/train/
+  val_img_dir: data/processed/images/val/
+
+training:
+  num_epochs: 20
+  batch_size: 2
+  lr: 0.005
+  weight_decay: 0.0005
+  num_workers: 4
+  print_freq: 10          # log every N batches
+  resume_from_checkpoint: true
+
+model:
+  num_classes: 15         # Cable, Capacitor, ... Wood (update if needed)
+  freeze_backbone: false  # or true if you want head-only training initially
+  backbone: "resnet50"    # optional future configs
+
+checkpoint:
+  dir: checkpoints/
+  filename: maskrcnn_latest.pth
