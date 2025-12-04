@@ -47,8 +47,14 @@ def load_json_file(file_path):
 
         return data
 
+    except FileNotFoundError as e:
+        logging.error(str(e))
+        return None
+    except json.JSONDecodeError:
+        logging.exception(f"Invalid JSON in: {file_path}")
+        return None
     except Exception:
-        print(f"Unexpected error laoding: {file_path}")
+        logging.exception(f"Unexpected error loading: {file_path}")
         return None
 
 
@@ -56,7 +62,7 @@ def main():
     setup_logging()
 
     try:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Data Config
         data_path = data["data_dir"]
@@ -69,11 +75,16 @@ def main():
         # Train Config
         batch_size = train_cfg["batch_size"]
         lr = train_cfg["lr"]
-        weigth_decay = train_cfg["weigth_decay"]
+        weight_decay = train_cfg["weight_decay"]
         num_epochs = train_cfg["num_epochs"]
 
         # Model Config
         num_classes = model_cfg["num_classes"]
+
+        # Checkpoint Config
+        checkpoint_dir = ckpt_cfg["dir"]
+        file_name = ckpt_cfg["filename"]
+        full_path = os.path.join(checkpoint_dir,file_name)
 
         train_json = load_json_file(train_json_path)
         val_json = load_json_file(val_json_path)
@@ -83,13 +94,18 @@ def main():
             return
 
         train_images = train_json.get("images", [])
-        train_annotations = train_json.get("annotation", [])
+        train_annotations = train_json.get("annotations", [])
 
         val_images = val_json.get("images", [])
-        val_annotations = val_json.get("annotation", [])
+        val_annotations = val_json.get("annotations", [])
 
         logging.info("Merging COCO annotations...")
-        merge_coco_annotations(data_path=data_path, output_path=output_path)
+        merge_coco_annotations(
+            data_path=data_path,
+            output_path=output_path,
+            train_img_dir=train_img_dir,
+            val_img_dir=val_img_dir,
+        )
         logging.info("Merge completed.")
 
         train_dataset = COCOMergedDataset(
@@ -113,21 +129,27 @@ def main():
         )
 
         model = get_model(num_classes=num_classes)
-        optimizer = get_optimizer(model=model, lr=lr, weight_decay=weigth_decay)
+        optimizer = get_optimizer(model=model, lr=lr, weight_decay=weight_decay)
         scheduler = get_lr_scheduler(optimizer=optimizer)
 
-        train_avg_loss = train_one_epoch(
-            model=model,
-            dataloader=train_loader,
-            optimizer=optimizer,
-            device=device,
-            epoch=num_epochs,
-            scheduler=scheduler,
-        )
+        for epoch in range(1,num_epochs+1):
 
-        val_avg_loss = evaluate_one_epoch(
-            model=model, dataloader=val_loader, epoch=num_epochs
-        )
+            train_avg_loss = train_one_epoch(
+                model=model,
+                dataloader=train_loader,
+                optimizer=optimizer,
+                device=device,
+                epoch=epoch,
+                scheduler=scheduler,
+            )
+
+            val_avg_loss = evaluate_one_epoch(
+                model=model, dataloader=val_loader, epoch=epoch, device=device
+            )
+            logging.info(
+                f"Epoch: [{epoch}/{num_epochs}]"
+                f"Train_loss: {train_avg_loss:.4f} | Val loss: {val_avg_loss:.4f}"
+            )
 
     except Exception:
         logging.exception("Unexpected error in main()")
