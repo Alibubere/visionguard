@@ -1,6 +1,5 @@
 import torch
 import logging
-from src.work_data.dataloader import get_dataloader
 
 
 def train_one_epoch(

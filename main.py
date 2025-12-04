@@ -5,7 +5,9 @@ import torch
 import json
 from src.work_data.merge_coco import merge_coco_annotations
 from src.work_data.dataset import COCOMergedDataset
-
+from src.work_data.dataloader import get_dataloader
+from src.model import get_model, get_lr_scheduler, get_optimizer
+from src.train import train_one_epoch, evaluate_one_epoch
 
 with open("configs/config.yaml") as f:
     config = yaml.safe_load(f)
@@ -14,6 +16,7 @@ data = config["data"]
 train_cfg = config["training"]
 model_cfg = config["model"]
 ckpt_cfg = config["checkpoint"]
+
 
 def setup_logging():
     """
@@ -54,6 +57,8 @@ def main():
 
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        # Data Config
         data_path = data["data_dir"]
         output_path = data["output_dir"]
         train_json_path = data["json_train_path"]
@@ -61,7 +66,14 @@ def main():
         train_img_dir = data["train_img_dir"]
         val_img_dir = data["val_img_dir"]
 
+        # Train Config
+        batch_size = train_cfg["batch_size"]
+        lr = train_cfg["lr"]
+        weigth_decay = train_cfg["weigth_decay"]
+        num_epochs = train_cfg["num_epochs"]
 
+        # Model Config
+        num_classes = model_cfg["num_classes"]
 
         train_json = load_json_file(train_json_path)
         val_json = load_json_file(val_json_path)
@@ -70,11 +82,11 @@ def main():
             logging.error("Train or val JSON is None. Exiting.")
             return
 
-        train_images = train_json.get("images",[])
-        train_annotations = train_json.get("annotation",[])
+        train_images = train_json.get("images", [])
+        train_annotations = train_json.get("annotation", [])
 
-        val_images = val_json.get("images",[])
-        val_annotations = val_json.get("annotation",[])
+        val_images = val_json.get("images", [])
+        val_annotations = val_json.get("annotation", [])
 
         logging.info("Merging COCO annotations...")
         merge_coco_annotations(data_path=data_path, output_path=output_path)
@@ -90,7 +102,31 @@ def main():
             images_list=val_images,
             annotations_list=val_annotations,
             img_dir=val_img_dir,
-            transforms=None
+            transforms=None,
+        )
+
+        train_loader = get_dataloader(
+            train_dataset, batch_size=batch_size, shuffle=True, num_workers=4
+        )
+        val_loader = get_dataloader(
+            val_dataset, batch_size=batch_size, shuffle=False, num_workers=4
+        )
+
+        model = get_model(num_classes=num_classes)
+        optimizer = get_optimizer(model=model, lr=lr, weight_decay=weigth_decay)
+        scheduler = get_lr_scheduler(optimizer=optimizer)
+
+        train_avg_loss = train_one_epoch(
+            model=model,
+            dataloader=train_loader,
+            optimizer=optimizer,
+            device=device,
+            epoch=num_epochs,
+            scheduler=scheduler,
+        )
+
+        val_avg_loss = evaluate_one_epoch(
+            model=model, dataloader=val_loader, epoch=num_epochs
         )
 
     except Exception:
