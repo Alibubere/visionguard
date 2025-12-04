@@ -40,7 +40,7 @@ def load_json_file(file_path):
     try:
 
         if not os.path.exists(file_path):
-            raise FileExistsError(f"File not found: {file_path}")
+            raise FileNotFoundError(f"File not found: {file_path}")
 
         with open(file_path, "r") as f:
             data = json.load(f)
@@ -79,12 +79,21 @@ def main():
         num_epochs = train_cfg["num_epochs"]
 
         # Model Config
-        num_classes = model_cfg["num_classes"]
+        cfg_num_classes = model_cfg["num_classes"]
 
         # Checkpoint Config
         checkpoint_dir = ckpt_cfg["dir"]
         file_name = ckpt_cfg["filename"]
         full_path = os.path.join(checkpoint_dir,file_name)
+             
+        logging.info("Merging COCO annotations...")
+        merge_coco_annotations(
+            data_path=data_path,
+            output_path=output_path,
+            train_img_dir=train_img_dir,
+            val_img_dir=val_img_dir,
+        )
+        logging.info("Merge completed.")
 
         train_json = load_json_file(train_json_path)
         val_json = load_json_file(val_json_path)
@@ -95,18 +104,18 @@ def main():
 
         train_images = train_json.get("images", [])
         train_annotations = train_json.get("annotations", [])
+        categories = train_json.get("categories", [])
+        num_classes = len(categories) + 1  # +1 for background
+        logging.info(f"Detected {len(categories)} categories. Using num_classes={num_classes}")
+        all_labels = [ann["category_id"] for ann in train_annotations]
+        min_label = min(all_labels)
+        max_label = max(all_labels)
+        logging.info(f"Label range in annotations: min={min_label}, max={max_label}")
+
 
         val_images = val_json.get("images", [])
         val_annotations = val_json.get("annotations", [])
 
-        logging.info("Merging COCO annotations...")
-        merge_coco_annotations(
-            data_path=data_path,
-            output_path=output_path,
-            train_img_dir=train_img_dir,
-            val_img_dir=val_img_dir,
-        )
-        logging.info("Merge completed.")
 
         train_dataset = COCOMergedDataset(
             images_list=train_images,

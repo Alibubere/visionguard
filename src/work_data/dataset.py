@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 from pycocotools import mask as maskUtils
+import torchvision.transforms.functional as f
 import os
 import json
 import numpy as np
@@ -65,7 +66,15 @@ class COCOMergedDataset(Dataset):
 
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         labels = torch.as_tensor(labels, dtype=torch.int64)
+        masks = np.array(masks)
         masks = torch.as_tensor(masks, dtype=torch.uint8)
+        if len(masks) > 0:
+            masks_np = np.stack(masks, axis=0)  # (N, H, W)
+            masks = torch.as_tensor(masks_np, dtype=torch.uint8)
+        else:
+            masks = torch.zeros((0, img_info["height"], img_info["width"]), dtype=torch.uint8)
+
+
         areas = torch.as_tensor(areas, dtype=torch.float32)
         iscrowd = torch.as_tensor(iscrowd, dtype=torch.int64)
         image_id = torch.tensor([img_id])
@@ -81,4 +90,7 @@ class COCOMergedDataset(Dataset):
         if self.transforms:
             img, target = self.transforms(img, target)
 
+        else:
+            img = f.to_tensor(img)
+        
         return img, target
