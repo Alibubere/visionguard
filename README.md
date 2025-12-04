@@ -6,7 +6,7 @@
 [![Code Style](https://img.shields.io/badge/Code%20Style-Black-black.svg)](https://github.com/psf/black)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/Alibubere/visionguard/graphs/commit-activity)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/Alibubere/visionguard)
-[![Deep Learning](https://img.shields.io/badge/Deep%20Learning-Computer%20Vision-orange.svg)](https://github.com/yourusername/visionguard)
+[![Deep Learning](https://img.shields.io/badge/Deep%20Learning-Computer%20Vision-orange.svg)](https://github.com/Alibubere/visionguard)
 [![Model](https://img.shields.io/badge/Model-Mask%20R--CNN-purple.svg)](https://arxiv.org/abs/1703.06870)
 [![Dataset](https://img.shields.io/badge/Dataset-COCO%20Format-yellow.svg)](https://cocodataset.org/)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)](https://github.com/Alibubere/visionguard)
@@ -51,7 +51,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/visionguard.git
+   git clone https://github.com/Alibubere/visionguard.git
    cd visionguard
    ```
 

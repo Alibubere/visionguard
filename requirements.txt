@@ -1,0 +1,18 @@
+# Core deep learning framework
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Configuration and data handling
+PyYAML>=6.0
+numpy>=1.21.0
+Pillow>=9.0.0
+
+# Computer vision and image processing
+opencv-python>=4.5.0
+matplotlib>=3.5.0
+
+# Optional: Development and code quality tools
+black>=22.0.0
+flake8>=4.0.0
+pytest>=7.0.0
