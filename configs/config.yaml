@@ -14,8 +14,8 @@ data:
   val_img_dir: data/processed/images/val/
 
 training:
-  num_epochs: 20
-  batch_size: 2
+  num_epochs: 2
+  batch_size: 4
   lr: 0.005
   weight_decay: 0.0005
   num_workers: 4

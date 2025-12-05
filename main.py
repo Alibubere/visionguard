@@ -6,7 +6,7 @@ import json
 from src.work_data.merge_coco import merge_coco_annotations
 from src.work_data.dataset import COCOMergedDataset
 from src.work_data.dataloader import get_dataloader
-from src.model import get_model, get_lr_scheduler, get_optimizer
+from src.model import get_model, get_lr_scheduler, get_optimizer , save_checkpoint , load_checkpoint
 from src.train import train_one_epoch, evaluate_one_epoch
 
 with open("configs/config.yaml") as f:
@@ -77,6 +77,7 @@ def main():
         lr = train_cfg["lr"]
         weight_decay = train_cfg["weight_decay"]
         num_epochs = train_cfg["num_epochs"]
+        resume = train_cfg["resume_from_checkpoint"]
 
         # Model Config
         cfg_num_classes = model_cfg["num_classes"]
@@ -85,6 +86,8 @@ def main():
         checkpoint_dir = ckpt_cfg["dir"]
         file_name = ckpt_cfg["filename"]
         full_path = os.path.join(checkpoint_dir,file_name)
+
+        os.makedirs(checkpoint_dir,exist_ok=True)
              
         logging.info("Merging COCO annotations...")
         merge_coco_annotations(
@@ -141,7 +144,15 @@ def main():
         optimizer = get_optimizer(model=model, lr=lr, weight_decay=weight_decay)
         scheduler = get_lr_scheduler(optimizer=optimizer)
 
-        for epoch in range(1,num_epochs+1):
+        start_epoch = 1
+
+        if resume and os.path.exists(full_path):
+            model, optimizer, start_epoch = load_checkpoint(model=model , optimizer=optimizer,path=full_path,device=device)
+            logging.info(f"Resuming train from epoch {start_epoch}")
+        else:
+            logging.info("No valid checkpoint found or resume disabled. Starting from scratch.")
+
+        for epoch in range(start_epoch,num_epochs+1):
 
             train_avg_loss = train_one_epoch(
                 model=model,
@@ -159,6 +170,8 @@ def main():
                 f"Epoch: [{epoch}/{num_epochs}]"
                 f"Train_loss: {train_avg_loss:.4f} | Val loss: {val_avg_loss:.4f}"
             )
+
+            save_checkpoint(model=model,optimizer=optimizer,epoch=epoch,path=full_path)
 
     except Exception:
         logging.exception("Unexpected error in main()")

@@ -72,9 +72,9 @@ def save_checkpoint(model, optimizer, epoch, path):
     logging.info(f"Checkpoint saved to {path}")
 
 
-def load_checkpoint(model, optimizer, path):
+def load_checkpoint(model, optimizer, path,device="cuda"):
 
-    checkpoint = torch.load(path)
+    checkpoint = torch.load(path,map_location=device)
 
     model.load_state_dict(checkpoint["model_state"])
     optimizer.load_state_dict(checkpoint["optimizer_state"])
